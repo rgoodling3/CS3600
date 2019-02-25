@@ -45,25 +45,29 @@ class ValueIterationAgent(ValueEstimationAgent):
 
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
-        U = dict()
-        Uprime = dict()
-        for state in self.mdp.getStates():
-            Uprime[state] = 0
-        delta = ((.00001)*(1 - self.discount) / self.discount) + 1
-        while delta > (.00001)*(1 - self.discount) / self.discount:
-            U = Uprime.copy()
-            delta = 0
-            for state in self.mdp.getStates():
-                if not self.mdp.isTerminal(state):
-                    maxvalue = 0
-                    for actions in self.mdp.getPossibleActions(state):
-                        for trans in self.mdp.getTransitionStatesAndProbs(state, actions):
-                            if (trans[1]*U[trans[0]] > maxvalue):
-                                maxvalue = trans[1]*U[trans[0]]
-                    Uprime[state] = self.mdp.getReward(state) + self.discount * maxvalue
-                    if(abs(Uprime[state] - U[state]) > delta) :
-                        delta = abs(Uprime[state] - U[state])
-        self.values = U
+        # get states
+        listofstates = self.mdp.getStates()
+        # iterate through iterations
+        for it in range(self.iterations):
+            v = util.Counter()
+            #iterate through states
+            for state in listofstates:
+                # start max at -inf
+                maxValue = None
+                # if its the terminal state, value[state] becomes 0
+                if(self.mdp.isTerminal(state)):
+                    v[state] = 0
+                # else iterate through actions
+                else:
+                    for act in self.mdp.getPossibleActions(state):
+                        q = self.getQValue(state,act)
+                        # if qVal is greater than max, the max becomes qval
+                        if (q >= maxValue):
+                            maxValue = q
+                        # value[state] = max
+                        v[state] = maxValue
+            # at end of state iteration, self.values = value
+            self.values = v
 
     def getValue(self, state):
         """
@@ -78,10 +82,20 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        sum = 0
-        for trans in self.mdp.getTransitionStatesAndProbs(state, action):
-            sum += trans[1] * self.values
-        return sum
+        # set qVal, calc, and reward to 0
+        q = 0
+        calculation = 0
+        reward = 0
+        # get Transition States And Probs for state and action
+        tsp = self.mdp.getTransitionStatesAndProbs(state,action)
+        # if the length of tsp is not 0
+        if (len(tsp) > 0) :
+            # iterate through transactions in states
+            for trans in tsp:
+                calculation = self.values[trans[0]] * self.discount
+                reward = self.mdp.getReward(state,action,trans[0])
+                q += (reward+calculation) * trans[1]
+        return q
         util.raiseNotDefined()
 
     def computeActionFromValues(self, state):
@@ -94,8 +108,22 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        if self.mdp.isTerminal(state):
-            return None
+        # get possible actions for the state
+        possibleActions = self.mdp.getPossibleActions(state)
+        qVal = 0
+        piStar = None
+        maxValue = None
+        # if length of possible actions is not 0 or not terminal state 
+        if (len(possibleActions) > 0 or not self.mdp.isTerminal(state)):
+            # iterate through possible actions
+            for poss in possibleActions:
+                # q becomes computeQValuesFromVales(state,possible action)
+                qVal = self.computeQValueFromValues(state,poss)
+                # if q is greater than or equal to max, max becomes q and piStar becomes possible action
+                if (qVal >= maxValue):
+                    piStar = poss
+                    maxValue = qVal
+        return piStar
         util.raiseNotDefined()
 
     def getPolicy(self, state):
