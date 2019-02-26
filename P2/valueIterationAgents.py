@@ -54,18 +54,19 @@ class ValueIterationAgent(ValueEstimationAgent):
             for state in listofstates:
                 # start max at -inf
                 maxValue = None
+                possibleActions = self.mdp.getPossibleActions(state)
                 # if its the terminal state, value[state] becomes 0
-                if(self.mdp.isTerminal(state)):
-                    v[state] = 0
-                # else iterate through actions
-                else:
-                    for act in self.mdp.getPossibleActions(state):
+                if not (self.mdp.isTerminal(state)) :
+                    for act in possibleActions:
                         q = self.getQValue(state,act)
                         # if qVal is greater than max, the max becomes qval
                         if (q >= maxValue):
                             maxValue = q
                         # value[state] = max
                         v[state] = maxValue
+                # else iterate through actions
+                else:
+                    v[state] = 0
             # at end of state iteration, self.values = value
             self.values = v
 
@@ -82,19 +83,21 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        # set qVal, calc, and reward to 0
+        # set q, calculation, and reward to 0
         q = 0
         calculation = 0
         reward = 0
         # get Transition States And Probs for state and action
         tsp = self.mdp.getTransitionStatesAndProbs(state,action)
         # if the length of tsp is not 0
-        if (len(tsp) > 0) :
-            # iterate through transactions in states
-            for trans in tsp:
-                calculation = self.values[trans[0]] * self.discount
-                reward = self.mdp.getReward(state,action,trans[0])
-                q += (reward+calculation) * trans[1]
+        if (len(tsp) == 0) :
+            return 0
+        else:
+            # iterate through transitions in states
+            for transition in tsp:
+                calculation = self.values[transition[0]] * self.discount
+                reward = self.mdp.getReward(state,action,transition[0])
+                q += (reward+calculation) * transition[1]
         return q
         util.raiseNotDefined()
 
@@ -108,22 +111,22 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        # get possible actions for the state
-        possibleActions = self.mdp.getPossibleActions(state)
-        qVal = 0
-        piStar = None
+        # init values
+        nextMove = None
         maxValue = None
-        # if length of possible actions is not 0 or not terminal state 
-        if (len(possibleActions) > 0 or not self.mdp.isTerminal(state)):
+        # if length of possible actions is 0 or terminal state 
+        if (len(self.mdp.getPossibleActions(state)) == 0) :
+            return None
+        else:
             # iterate through possible actions
-            for poss in possibleActions:
+            for act in self.mdp.getPossibleActions(state):
                 # q becomes computeQValuesFromVales(state,possible action)
-                qVal = self.computeQValueFromValues(state,poss)
-                # if q is greater than or equal to max, max becomes q and piStar becomes possible action
-                if (qVal >= maxValue):
-                    piStar = poss
+                qVal = self.computeQValueFromValues(state,act)
+                # if q is greater than or equal to max, max becomes q and nextMove becomes action
+                if (qVal >= maxValue) :
+                    nextMove = act
                     maxValue = qVal
-        return piStar
+        return nextMove
         util.raiseNotDefined()
 
     def getPolicy(self, state):
