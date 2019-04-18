@@ -105,3 +105,8 @@ def testCar(setFunc = setEntropy, infoFunc = infoGain):
     print 'Results for training set:\n%s\n'%str(evaluation)
     printDemarcation()
     return (tree,evaluation)
+
+testDummySet1()
+testDummySet2()
+testCar()
+testConnect4()
